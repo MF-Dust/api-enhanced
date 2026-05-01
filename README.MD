@@ -1,251 +1,211 @@
-<p align="center">
-  <img src="./public/docs/netease.png" alt="网易云音乐 API Enhanced Logo" width="120" height="120" />
-</p>
+# PyNCMAPI
 
-<h1 align="center">NeteaseCloudMusicAPI Enhanced</h1>
+PyNCMAPI 是网易云音乐 API 服务的 Python/FastAPI 迁移版，目标是尽量兼容原 Node.js 版的 HTTP 路由、参数形式、cookie 行为、静态页面和模块调用方式。
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api">
-    <img src="https://img.shields.io/npm/v/@neteasecloudmusicapienhanced/api?style=flat-square" alt="NPM Version" />
-  </a>
-  <a href="https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api">
-    <img src="https://img.shields.io/npm/dm/@neteasecloudmusicapienhanced/api?style=flat-square" alt="NPM Downloads" />
-  </a>
-  <a href="https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced">
-    <img src="https://img.shields.io/github/license/NeteaseCloudMusicApiEnhanced/api-enhanced?style=flat-square" alt="License" />
-  </a>
-  <a href="https://nodejs.org/">
-    <img src="https://img.shields.io/node/v/@neteasecloudmusicapienhanced/api?style=flat-square" alt="Node Version" />
-  </a>
-  <a href="https://hub.docker.com/r/moefurina/ncm-api">
-    <img src="https://img.shields.io/docker/v/moefurina/ncm-api?style=flat-square" alt="Docker Version" />
-  </a>
-  <a href="https://hub.docker.com/r/moefurina/ncm-api">
-    <img src="https://img.shields.io/docker/pulls/moefurina/ncm-api?style=flat-square" alt="Docker Pulls" />
-  </a>
-  <a href="https://www.typescriptlang.org/">
-    <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript" alt="TypeScript" />
-  </a>
-</p>
+当前项目已经迁移为 Python 项目形态：接口模块位于 `modules/`，公共请求、加密、配置和服务入口位于根目录。
 
+## 功能特性
 
+- FastAPI HTTP 服务，兼容原接口路由，例如 `/login/status`、`/song/url/v1`、`/playlist/detail`。
+- 保留特殊旧路由：`/fm_trash`、`/personal_fm`、`/ugc/user/devote`。
+- 支持 query、JSON、form 和 multipart 上传参数。
+- 支持 cookie 透传、`NETEASE_COOKIE` 环境变量、CORS、代理和通用解灰配置。
+- 支持 Python 直接调用模块函数，例如 `login_status()`。
+- 内置 2 分钟成功响应缓存，降低重复请求压力。
 
-## 项目简介
+## 环境要求
 
-网易云音乐第三方 Node.js API, 支持丰富的音乐相关接口，适合自建服务、二次开发和多平台部署(如果原版诈尸, 我会及时同步 or 归档)。
+- Python 3.13+
+- uv
+- 可选：Node.js，用于调用原 `@neteasecloudmusicapienhanced/unblockmusic-utils` 解灰桥接能力
 
-> [!IMPORTANT]
->
-> ## 注意
->
-> - 本项目是一个高度去中心化的第三方 API，其维护都由社区志愿者使用`Pull Request`完成。   
-> - 使用本项目时请务必遵守相关法律法规，遵守`MIT`协议, 尊重网易云音乐的服务条款。   
-> - 原作者项目 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 并非完全停止维护, 你可以在 [NeteaseCloudMusicApi 的 NPMJS 页面](https://www.npmjs.com/package/NeteaseCloudMusicApi) 查看最新版本信息。   
-> - 感谢尊重和理解!
+安装 uv 可参考官方安装方式；如果本机已经有 `uv`，直接进入下一步即可。
 
 ## 快速开始
 
-### 环境要求
+安装依赖：
 
-- Node.js 18 及以上
-- 推荐使用 pnpm 进行依赖管理
-
-### 安装
-
-```bash
-git clone https://github.com/neteasecloudmusicapienhanced/api-enhanced.git
-cd api
-pnpm i
+```powershell
+uv sync
 ```
 
-### 启动服务
+启动服务：
 
-```bash
-# 默认端口 3000
-node app.js
-
-# 指定端口（如 4000）
-PORT=4000 node app.js  # Mac/Linux
-set PORT=4000 && node app.js  # Windows
+```powershell
+uv run python main.py
 ```
 
-### 重要提示
+指定地址和端口：
 
-- 调用前请务必阅读文档的 [调用前须知](https://neteasecloudmusicapienhanced.js.org/#/?id=%e8%b0%83%e7%94%a8%e5%89%8d%e9%a1%bb%e7%9f%a5) 部分。
-- 推荐将敏感信息（如 cookie）通过部署平台的环境变量进行配置。
-
-## 在线体验与文档
-
-- [在线文档](https://neteasecloudmusicapienhanced.js.org/)
-- [NPM 包地址](https://www.npmjs.com/package/@neteasecloudmusicapienhanced/api)
-- [Dockerhub 主页](https://hub.docker.com/r/moefurina/ncm-api)
-
-## 常见部署方式
-
-- 推荐参考[在线文档](https://neteasecloudmusicapienhanced.js.org/)
-
-## Docker 部署说明
-
-本项目支持通过 Docker 一键部署，无需手动安装 Node.js 或依赖。
-
-> 注意: 在 docker 中运行的时候, 由于使用了 request 来发请求, 所以会检查几个 proxy 相关的环境变量(如下所列), 这些环境变量 会影响到 request 的代理, 详情请参考[request 的文档](https://github.com/request/request#proxies), 如果这些环境变量 指向的代理不可用, 那么就会造成错误, 所以在使用 docker 的时候一定要注意这些环境变量. 不过, 要是你在 query 中加上了 proxy 参数, 那么环境变量会被覆盖, 就会用你通过 proxy 参数提供的代理了.
-
-request 相关的环境变量
-
-1. http_proxy
-2. https_proxy
-3. HTTP_PROXY
-4. HTTPS_PROXY
-5. no_proxy
-6. NO_PROXY
-
-```shell
-docker pull moefurina/ncm-api:latest
-
-docker run -d -p 3000:3000 --name ncm-api moefurina/ncm-api:latest
-
-
-// 或者
-docker run -d -p 3000:3000 moefurina/ncm-api:latest
-
-// 去掉或者设置相关的环境变量
-
-docker run -d -p 3000:3000 --name ncm-api -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
-
-// 或者
-docker run -d -p 3000:3000 -e http_proxy= -e https_proxy= -e no_proxy= -e HTTP_PROXY= -e HTTPS_PROXY= -e NO_PROXY= moefurina/ncm-api:latest
+```powershell
+uv run python main.py --host 0.0.0.0 --port 3000
 ```
 
-> 以下是自行 build docker 镜像方式
+启动后默认访问：
 
-```shell
-$ git clone https://github.com/NeteaseCloudMusicApiEnhanced/api-enhanced && cd api-enhanced
-
-$ sudo docker build . -t ncm-api
-
-$ sudo docker run -d -p 3000:3000 ncm-api
+```text
+http://localhost:3000
 ```
 
-## 3. 环境变量
+示例请求：
 
-| 变量名                        | 默认值                                  | 说明                                                 |
-|----------------------------|--------------------------------------|----------------------------------------------------|
-| **CORS_ALLOW_ORIGIN**      | `*`                                  | 允许跨域请求的域名。可填写单个源，或使用逗号分隔多个源（例如 `https://a.com,https://b.com`）。 |
-| **ENABLE_PROXY**           | `false`                              | 是否启用反向代理功能。                                        |
-| **PROXY_URL**              | `https://your-proxy-url.com/?proxy=` | 代理服务地址。仅当 `ENABLE_PROXY=true` 时生效。                 |
-| **ENABLE_GENERAL_UNBLOCK** | `true`                               | 是否启用全局解灰（推荐开启）。开启后所有歌曲都尝试自动解锁。                     |
-| **ENABLE_FLAC**            | `true`                               | 是否启用无损音质（FLAC）。                                    |
-| **SELECT_MAX_BR**          | `false`                              | 启用无损音质时，是否选择最高码率音质。                                |
-| **FOLLOW_SOURCE_ORDER**    | `true`                               | 是否严格按照音源列表顺序进行匹配。                                  |
-
----
-
-### 4. 更新镜像
-
-更新到最新版本：
-
-```bash
-docker pull moefurina/ncm-api:latest
-docker stop ncm-api && docker rm ncm-api
-docker run -d -p 3000:3000 moefurina/ncm-api:latest
+```text
+http://localhost:3000/login/status
+http://localhost:3000/search?keywords=海阔天空
+http://localhost:3000/song/url/v1?id=33894312&level=lossless
 ```
 
-## Vercel 一键部署
+静态页面也会从 `public/` 目录提供，例如：
 
-1. fork 本项目
-2. 在 Vercel 官网新建项目，导入 fork 的仓库
-3. 直接 Deploy
-
-## 腾讯云 Serverless 部署
-
-1. fork 本项目
-2. 在腾讯云 serverless 控制台新建 Web 应用，选择 Express 框架
-3. 代码仓库选择 fork 的项目，启动文件填写：
-   ```bash
-   #!/bin/bash
-   export PORT=9000
-   /var/lang/node16/bin/node app.js
-   ```
-4. 完成部署后，访问 API 网关的 URL 即可
-
-## Node.js 方式调用
-
-支持直接在 Node.js 项目中引入和调用，返回 Promise：
-
-```js
-const {
-  login_cellphone,
-  user_cloud,
-} = require('@neteasecloudmusicapienhanced/api')
-async function main() {
-  const result = await login_cellphone({ phone: '手机号', password: '密码' })
-  console.log(result)
-  const result2 = await user_cloud({ cookie: result.body.cookie })
-  console.log(result2.body)
-}
-main()
+```text
+http://localhost:3000/login.html
 ```
 
-## TypeScript 支持
+## 配置
 
-```ts
-import { banner } from '@neteasecloudmusicapienhanced/api'
-banner({ type: 0 }).then((res) => console.log(res))
+复制示例环境文件：
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-## 单元测试
+常用配置项：
 
-```bash
-pnpm test
+```dotenv
+# CORS allowed origins, comma-separated
+CORS_ALLOW_ORIGIN=
+
+# Proxy settings
+ENABLE_PROXY=false
+PROXY_URL=
+
+# Song unblock
+ENABLE_GENERAL_UNBLOCK=false
+ENABLE_FLAC=false
+
+# NetEase cookie, for example: MUSIC_U=xxx
+NETEASE_COOKIE=
+
+# Server
+PORT=3000
+HOST=
 ```
 
-## 主要功能特性
+说明：
 
-- 登录/注册/验证码
-- 用户信息、歌单、动态、播放记录
-- 歌曲、专辑、歌手、MV、歌词、评论、排行榜
-- 搜索、推荐、私人 FM、签到、云盘
-- 歌曲解锁（解灰）
+- `NETEASE_COOKIE` 可用于需要登录态的接口。
+- `CORS_ALLOW_ORIGIN` 为空时会按请求来源返回 CORS 头；设置为 `*` 时允许任意来源。
+- `ENABLE_GENERAL_UNBLOCK=true` 会在 `/song/url/v1` 获取失败或试听限制时尝试通用解灰。
+- `PROXY_URL` 可配合 `ENABLE_PROXY=true` 使用。
 
-## 贡献与社区
+## HTTP 调用
 
-- 欢迎提交 PR、Issue 参与维护
-- 要贡献新接口, 请参考[这篇文章](https://www.focalors.ltd/post/how-to-contribute-ncm-api)
+GET 和 POST 都可调用接口。参数可以放在 query string、JSON body、表单 body 或 multipart form 中。
 
-### 致谢
+GET 示例：
 
-原作者 [Binaryify/NeteaseCloudMusicApi](https://github.com/binaryify/NeteaseCloudMusicApi) 项目为本项目基础 (该项目在`npmjs`网站上仍持续维护, 但 github 仓库已不再更新)
+```powershell
+curl "http://localhost:3000/playlist/detail?id=3778678"
+```
 
-感谢大佬们为逆向eapi, weapi等加密算法所做的贡献
+POST JSON 示例：
 
-项目参考:
+```powershell
+curl -X POST "http://localhost:3000/search" `
+  -H "Content-Type: application/json" `
+  -d "{\"keywords\":\"周杰伦\",\"limit\":10}"
+```
 
-[trazyn/ieaseMusic](https://github.com/trazyn/ieaseMusic)
+上传接口示例：
 
-[listen1/listen1_chrome_extension](https://github.com/listen1/listen1_chrome_extension)
+```powershell
+curl -X POST "http://localhost:3000/playlist/cover/update" `
+  -F "id=123456" `
+  -F "imgFile=@cover.jpg"
+```
 
-[chaunsin/netease-cloud-music](https://github.com/chaunsin/netease-cloud-music)
+如果需要单次请求传 cookie，可以使用 `cookie` 参数：
 
-### SDK 生态
+```text
+/login/status?cookie=MUSIC_U=xxx;__csrf=yyy
+```
 
-| 语言     | 作者                                          | 地址                                                                                       | 类型  |
-|--------|---------------------------------------------|------------------------------------------------------------------------------------------|-----|
-| Java   | [JackuXL](https://github.com/JackuXL)       | [NeteaseCloudMusicApi-SDK](https://github.com/JackuXL/NeteaseCloudMusicApi-SDK)          | 第三方 |
-| Java   | [1015770492](https://github.com/1015770492) | https://github.com/1015770492/yumbo-music-utils                                          | 第三方 |
-| Python | [盧瞳](https://github.com/2061360308)         | [NeteaseCloudMusic_PythonSDK](https://github.com/2061360308/NeteaseCloudMusic_PythonSDK) | 第三方 |
-| Swift  | [Lincb522](https://github.com/Lincb522)  | [NeteaseCloudMusicApi-Swift](https://github.com/Lincb522/NeteaseCloudMusicAPI-Swift)     | 第三方 |
+## Python 调用
+
+项目入口会动态暴露 `modules/` 下的接口函数。函数名与模块文件名一致，参数为 `dict`。
+
+```python
+import asyncio
+import PyNCMAPI
 
 
-### 依赖此项目的优秀开源项目
+async def main():
+    result = await PyNCMAPI.login_status({
+        "cookie": "MUSIC_U=xxx;__csrf=yyy",
+    })
+    print(result)
 
-- [imsyy/splayer](https://github.com/imsyy/splayer)
 
-- [qier2222/YesPlayMusic](https://github.com/qier222/YesPlayMusic)
+asyncio.run(main())
+```
 
-- [MaigoLabs/amaoke.app](https://github.com/MaigoLabs/amaoke.app)
+也可以获取 FastAPI app：
 
-- [Yueby/music-together](https://github.com/Yueby/music-together)
+```python
+import PyNCMAPI
+
+app = PyNCMAPI.construct_server()
+```
+
+## 测试
+
+运行测试：
+
+```powershell
+uv run pytest -q
+```
+
+语法编译检查：
+
+```powershell
+uv run python -m compileall -q .
+```
+
+当前测试覆盖：
+
+- 加密函数
+- Node/Python 模块数量和名称对齐
+- 特殊路由兼容
+- 静态文件服务
+- 成功响应缓存
+- HTTPS Set-Cookie 兼容
+- multipart 上传参数归一化
+- 请求层自定义 headers
+- Python 包入口调用
+
+## 项目结构
+
+```text
+.
+├── main.py              # CLI 启动入口
+├── server.py            # FastAPI 应用和路由加载
+├── request.py           # 网易云请求封装
+├── crypto.py            # weapi/eapi/linuxapi 加密
+├── config.py            # 配置和常量
+├── modules/             # API 接口模块
+├── plugins/             # 上传等复用插件
+├── public/              # 静态页面和文档资源
+├── tests/               # 测试
+├── pyproject.toml       # Python 项目配置
+└── uv.lock              # uv 锁文件
+```
+
+## 迁移状态
+
+PyNCMAPI 以原 Node.js 版 `4.32.0` 行为为兼容基准。当前 Python 模块数量与原 `module/*.js` 对齐，HTTP 路由按文件名生成，并保留原版特殊路由规则。
+
+仍建议在生产使用前对关键接口做一次真实账号和网络环境验证，因为网易云接口本身可能随服务端策略变化而变化。
 
 ## License
 
-[MIT License](https://github.com/MoeFurina/NeteaseCloudMusicApiEnhanced/blob/main/LICENSE)
+MIT

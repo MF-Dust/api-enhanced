@@ -1,0 +1,22 @@
+[project]
+name = "pyncmapi"
+version = "0.1.0"
+description = "NetEase Cloud Music API - Python implementation"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiofiles>=25.1.0",
+    "fastapi>=0.136.1",
+    "httpx>=0.28.1",
+    "mutagen>=1.47.0",
+    "pycryptodome>=3.23.0",
+    "pytest>=9.0.3",
+    "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.27",
+    "qrcode[pil]>=8.2",
+    "uvicorn[standard]>=0.46.0",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
