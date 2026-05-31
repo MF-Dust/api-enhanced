@@ -22,6 +22,4 @@ async def handler(query: dict, request) -> dict:
     data = {
         "threadId": thread_id,
     }
-    return await request(
-        f"/api/resource/{t}", data, create_option(query, "weapi")
-    )
+    return await request(f"/api/resource/{t}", data, create_option(query, "weapi"))

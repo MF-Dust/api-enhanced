@@ -8,6 +8,4 @@ async def handler(query: dict, request) -> dict:
         "limit": query.get("limit", 20),
         "startTimestamp": query.get("before", int(time.time() * 1000)),
     }
-    return await request(
-        "/api/sub/artist/new/works/song/list", data, create_option(query, "weapi")
-    )
+    return await request("/api/sub/artist/new/works/song/list", data, create_option(query, "weapi"))

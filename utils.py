@@ -1,9 +1,7 @@
-import os
 import random
-import secrets
 import time
 from pathlib import Path
-from urllib.parse import quote, unquote
+from urllib.parse import quote
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -57,12 +55,14 @@ def _ip_to_int(ip: str) -> int:
 
 
 def _int_to_ip(ip_int: int) -> str:
-    return ".".join([
-        str((ip_int >> 24) & 0xFF),
-        str((ip_int >> 16) & 0xFF),
-        str((ip_int >> 8) & 0xFF),
-        str(ip_int & 0xFF),
-    ])
+    return ".".join(
+        [
+            str((ip_int >> 24) & 0xFF),
+            str((ip_int >> 16) & 0xFF),
+            str((ip_int >> 8) & 0xFF),
+            str(ip_int & 0xFF),
+        ]
+    )
 
 
 def _parse_cidr(cidr: str) -> dict:

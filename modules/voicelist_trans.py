@@ -9,6 +9,4 @@ async def handler(query: dict, request) -> dict:
         "programId": query.get("programId", "0"),
         "position": query.get("position", "1"),
     }
-    return await request(
-        "/api/voice/workbench/radio/program/trans", data, create_option(query)
-    )
+    return await request("/api/voice/workbench/radio/program/trans", data, create_option(query))

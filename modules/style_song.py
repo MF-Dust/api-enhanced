@@ -8,6 +8,4 @@ async def handler(query: dict, request) -> dict:
         "tagId": query.get("tagId"),
         "sort": query.get("sort", 0),
     }
-    return await request(
-        "/api/style-tag/home/song", data, create_option(query, "weapi")
-    )
+    return await request("/api/style-tag/home/song", data, create_option(query, "weapi"))

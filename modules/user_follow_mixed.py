@@ -9,10 +9,12 @@ async def handler(query: dict, request) -> dict:
     scene = query.get("scene", 0)
     data = {
         "authority": "false",
-        "page": json.dumps({
-            "size": size,
-            "cursor": cursor,
-        }),
+        "page": json.dumps(
+            {
+                "size": size,
+                "cursor": cursor,
+            }
+        ),
         "scene": scene,
         "size": size,
         "sortType": "0",

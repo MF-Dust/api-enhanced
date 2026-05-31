@@ -1,5 +1,6 @@
 import pytest
-from crypto import weapi, linuxapi, eapi, eapi_res_decrypt, eapi_req_decrypt
+
+from crypto import eapi, eapi_req_decrypt, eapi_res_decrypt, linuxapi, weapi
 
 
 class TestWeapi:
@@ -10,6 +11,7 @@ class TestWeapi:
 
     def test_params_is_base64_string(self):
         import base64
+
         result = weapi({"ids": [347230], "br": 999000, "csrf_token": ""})
         # Should be valid base64
         try:
@@ -77,7 +79,7 @@ class TestEapiResDecrypt:
 
 class TestEapiReqDecrypt:
     def test_decrypt_roundtrip(self):
-        import json
+
         url = "/api/v1/playlist/detail"
         data = {"id": 24381616, "n": 1000}
         encrypted = eapi(url, data)

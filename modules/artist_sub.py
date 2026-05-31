@@ -8,6 +8,4 @@ async def handler(query: dict, request) -> dict:
         "artistId": query.get("id"),
         "artistIds": f"[{query.get('id')}]",
     }
-    return await request(
-        f"/api/artist/{t}", data, create_option(query, "weapi")
-    )
+    return await request(f"/api/artist/{t}", data, create_option(query, "weapi"))

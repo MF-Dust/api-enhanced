@@ -12,6 +12,7 @@ async def handler(query: dict, request) -> dict:
         }
 
     from plugins.upload import image_upload
+
     upload_res = await image_upload(query, request)
 
     result = upload_res.get("body", {}).get("result", {})

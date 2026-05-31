@@ -1,5 +1,4 @@
 from option import create_option
-
 from utils import to_boolean
 
 

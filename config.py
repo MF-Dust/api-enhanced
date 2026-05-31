@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,13 +22,8 @@ MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7cl
 -----END PUBLIC KEY-----"""
 
 # xeapi constants
-XEAPI_STATIC_KEY = bytes.fromhex(
-    "ab1d5a430f6bb04a3f01e81ddd72bd916d5ce591248ac128714806d7f8fb1b84"
-)
-XEAPI_SIGN_KEY = (
-    "mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/"
-    "OKty3+lL2rGeoFBpVe5g=="
-)
+XEAPI_STATIC_KEY = bytes.fromhex("ab1d5a430f6bb04a3f01e81ddd72bd916d5ce591248ac128714806d7f8fb1b84")
+XEAPI_SIGN_KEY = "mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/OKty3+lL2rGeoFBpVe5g=="
 XEAPI_DOMAIN = "https://interface3.music.163.com"
 
 # Resource type map for comments

@@ -21,6 +21,7 @@ async def handler(query: dict, request) -> dict:
         }
 
     import re
+
     song_name = song or re.sub(r"\.[^.]+$", "", filename)
 
     res2 = await request(

@@ -4,13 +4,11 @@ import json
 import os
 import random
 import re
-import struct
 import zlib
 from base64 import b64decode, b64encode
 
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
-from Crypto.Util.number import bytes_to_long
 
 from config import (
     BASE62,
@@ -147,7 +145,6 @@ def _aes_ecb_decrypt_bytes(key: bytes, ciphertext: bytes) -> bytes:
 
 def _create_x25519_public_key(raw_key: bytes):
     """Create an X25519 public key from 32 raw bytes using SPKI format."""
-    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 
     # RFC 8410 SPKI header for id-X25519
     spki_prefix = bytes.fromhex("302a300506032b656e032100")
@@ -212,7 +209,7 @@ def xeapi_encrypt_s(dynamic_key: bytes, public_key_state: dict, os_name: str = "
 
     iv = os.urandom(12)
     sk = public_key_state.get("sk", "")
-    plaintext = f"{b64encode(dynamic_key).decode()}|{os_name}|{sk}".encode("utf-8")
+    plaintext = f"{b64encode(dynamic_key).decode()}|{os_name}|{sk}".encode()
 
     cipher = AES.new(aes_key, AES.MODE_GCM, nonce=iv)
     encrypted, tag = cipher.encrypt_and_digest(plaintext)
@@ -234,7 +231,7 @@ def build_xeapi_plaintext(uri: str, data: dict, options: dict = None) -> str:
     if method != "POST":
         fields["method"] = method
 
-    from urllib.parse import urlparse, parse_qs
+    from urllib.parse import urlparse
 
     parsed = urlparse(uri if uri.startswith("http") else f"https://interface.music.163.com{uri}")
     if parsed.query:
@@ -281,7 +278,7 @@ def xeapi(uri: str, data: dict, options: dict = None) -> dict:
     s = xeapi_encrypt_s(dynamic_key, public_key_state, options.get("os", "android"))
     r = _aes_ecb_encrypt_bytes(
         XEAPI_STATIC_KEY,
-        f"{public_key_state.get('version', '')}|{active_session_id if active_session_key else ''}".encode("utf-8"),
+        f"{public_key_state.get('version', '')}|{active_session_id if active_session_key else ''}".encode(),
     )
 
     return {

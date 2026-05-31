@@ -1,9 +1,8 @@
 import json
-import os
 import tempfile
 from pathlib import Path
 
-from utils import generate_random_chinese_ip, generate_device_id
+from utils import generate_device_id, generate_random_chinese_ip
 
 
 async def generate_config():
@@ -18,8 +17,8 @@ async def generate_config():
 
     # Try to get anonymous token
     try:
-        from request import ncm_request
         from option import create_option
+        from request import ncm_request
 
         result = await ncm_request(
             "/api/register/anonimous",

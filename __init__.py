@@ -1,26 +1,26 @@
 import importlib
 import sys
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 if str(PACKAGE_DIR) not in sys.path:
     sys.path.insert(0, str(PACKAGE_DIR))
 
 MODULE_DIR = PACKAGE_DIR / "modules"
-_module_names = sorted(
-    p.stem for p in MODULE_DIR.glob("*.py")
-    if p.stem != "__init__" and not p.stem.startswith("_")
-)
+_module_names = sorted(p.stem for p in MODULE_DIR.glob("*.py") if p.stem != "__init__" and not p.stem.startswith("_"))
 
 
 def construct_server():
     from server import app
+
     return app
 
 
 def serve(host: str = "0.0.0.0", port: int = 3000, **kwargs):
     import uvicorn
+
     return uvicorn.run("server:app", host=host, port=port, **kwargs)
 
 
@@ -29,7 +29,7 @@ def _make_module_callable(name: str) -> Callable[[dict | None, Any], Awaitable[d
         from request import ncm_request
 
         mod = importlib.import_module(f"modules.{name}")
-        handler = getattr(mod, "handler")
+        handler = mod.handler
         return await handler(query or {}, request or ncm_request)
 
     call.__name__ = name

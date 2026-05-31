@@ -1,7 +1,6 @@
+import config as cfg
 from option import create_option
 from utils import is_one
-
-import config as cfg
 
 
 async def handler(query: dict, request) -> dict:

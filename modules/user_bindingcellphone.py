@@ -11,6 +11,4 @@ async def handler(query: dict, request) -> dict:
         "captcha": query.get("captcha"),
         "password": hashlib.md5(password.encode()).hexdigest() if password else "",
     }
-    return await request(
-        "/api/user/bindingCellphone", data, create_option(query, "weapi")
-    )
+    return await request("/api/user/bindingCellphone", data, create_option(query, "weapi"))

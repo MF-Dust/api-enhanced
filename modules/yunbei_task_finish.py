@@ -6,6 +6,4 @@ async def handler(query: dict, request) -> dict:
         "userTaskId": query.get("userTaskId"),
         "depositCode": query.get("depositCode", "0"),
     }
-    return await request(
-        "/api/usertool/task/point/receive", data, create_option(query, "weapi")
-    )
+    return await request("/api/usertool/task/point/receive", data, create_option(query, "weapi"))

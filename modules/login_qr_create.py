@@ -1,4 +1,5 @@
 import qrcode
+
 from utils import generate_chain_id
 
 
@@ -7,6 +8,7 @@ async def handler(query: dict, request) -> dict:
     cookie = query.get("cookie", {})
     if isinstance(cookie, str):
         from utils import cookie_to_json
+
         cookie = cookie_to_json(cookie)
 
     url = f"https://music.163.com/login?codekey={query.get('key', '')}"
@@ -20,8 +22,9 @@ async def handler(query: dict, request) -> dict:
         qr = qrcode.QRCode(version=1, box_size=10, border=5)
         qr.add_data(url)
         qr.make(fit=True)
-        import io
         import base64
+        import io
+
         img = qr.make_image(fill_color="black", back_color="white")
         buf = io.BytesIO()
         img.save(buf, format="PNG")

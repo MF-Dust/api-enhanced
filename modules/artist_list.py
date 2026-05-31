@@ -16,6 +16,4 @@ async def handler(query: dict, request) -> dict:
         "type": query.get("type", "1"),
         "area": query.get("area"),
     }
-    return await request(
-        "/api/v1/artist/list", data, create_option(query, "weapi")
-    )
+    return await request("/api/v1/artist/list", data, create_option(query, "weapi"))

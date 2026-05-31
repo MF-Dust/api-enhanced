@@ -1,14 +1,15 @@
 import hashlib
 import json
+
 from option import create_option
 
 
 async def handler(query: dict, request) -> dict:
     captcha = query.get("captcha")
-    password = captcha if captcha else (
-        query.get("md5_password") or hashlib.md5(
-            (query.get("password") or "").encode()
-        ).hexdigest()
+    password = (
+        captcha
+        if captcha
+        else (query.get("md5_password") or hashlib.md5((query.get("password") or "").encode()).hexdigest())
     )
     data = {
         "type": "1",

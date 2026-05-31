@@ -1,8 +1,7 @@
 import json
 
-from option import create_option
-
 import config as cfg
+from option import create_option
 
 
 def _get_resource_type_id_map() -> dict:

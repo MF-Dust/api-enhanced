@@ -9,6 +9,4 @@ async def handler(query: dict, request) -> dict:
         "contentId": query.get("id"),
         "cancelCollect": t,
     }
-    return await request(
-        "/api/content/interact/collect", data, create_option(query)
-    )
+    return await request("/api/content/interact/collect", data, create_option(query))

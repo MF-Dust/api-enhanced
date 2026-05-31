@@ -15,6 +15,4 @@ async def handler(query: dict, request) -> dict:
         "total": False,
         "rcmd": True,
     }
-    return await request(
-        "/api/discovery/new/albums/area", data, create_option(query, "weapi")
-    )
+    return await request("/api/discovery/new/albums/area", data, create_option(query, "weapi"))

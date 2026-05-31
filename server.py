@@ -1,6 +1,6 @@
+import hashlib
 import importlib
 import json
-import hashlib
 import re
 import tempfile
 import time
@@ -12,8 +12,8 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 import config as cfg
+from request import RequestError, ncm_request
 from utils import cookie_to_json
-from request import ncm_request, RequestError
 
 app = FastAPI(title="PyNCMAPI", version="0.1.0")
 
@@ -123,7 +123,7 @@ def _parse_cookies(request: Request) -> dict:
         if idx < 1 or idx == len(pair) - 1:
             continue
         key = unquote(pair[:idx]).strip()
-        value = unquote(pair[idx + 1:]).strip()
+        value = unquote(pair[idx + 1 :]).strip()
         result[key] = value
     return result
 
@@ -260,8 +260,13 @@ def _load_modules():
                         if request.url.path == "/song/url/v1" and cfg.ENABLE_GENERAL_UNBLOCK == "true":
                             try:
                                 from unblock import match_id
+
                                 song = module_response["body"]["data"][0]
-                                if song.get("freeTrialInfo") is not None or not song.get("url") or song.get("fee") in (1, 4):
+                                if (
+                                    song.get("freeTrialInfo") is not None
+                                    or not song.get("url")
+                                    or song.get("fee") in (1, 4)
+                                ):
                                     result = await match_id(query.get("id"))
                                     song["url"] = result["data"]["url"]
                                     song["freeTrialInfo"] = None
@@ -290,11 +295,14 @@ def _load_modules():
                             )
 
                         if resp.status_code == 200 and _cacheable_request(request):
-                            _set_cache(cache_key, {
-                                "status": resp.status_code,
-                                "body": module_response.get("body", {}),
-                                "cookie": cookies if not query.get("noCookie") else [],
-                            })
+                            _set_cache(
+                                cache_key,
+                                {
+                                    "status": resp.status_code,
+                                    "body": module_response.get("body", {}),
+                                    "cookie": cookies if not query.get("noCookie") else [],
+                                },
+                            )
                         return resp
 
                     except RequestError as e:

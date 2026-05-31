@@ -21,7 +21,9 @@ async def handler(query: dict, request) -> dict:
         }
 
     ext = song_file.get("name", "").rsplit(".", 1)[-1] if "." in song_file.get("name", "") else ""
-    filename = query.get("songName") or song_file.get("name", "").replace(f".{ext}", "").replace(" ", "").replace(".", "_")
+    filename = query.get("songName") or song_file.get("name", "").replace(f".{ext}", "").replace(" ", "").replace(
+        ".", "_"
+    )
 
     token_res = await request(
         "/api/nos/token/alloc",
@@ -53,6 +55,7 @@ async def handler(query: dict, request) -> dict:
         )
 
     import xml.etree.ElementTree as ET
+
     root = ET.fromstring(init_res.text)
     upload_id = root.find("UploadId").text
 
@@ -65,7 +68,7 @@ async def handler(query: dict, request) -> dict:
 
     async with httpx.AsyncClient() as client:
         while offset < file_size:
-            chunk = file_data[offset:offset + block_size]
+            chunk = file_data[offset : offset + block_size]
             part_res = await client.put(
                 f"https://ymusic.nos-hz.163yun.com/{object_key}?partNumber={block_index}&uploadId={upload_id}",
                 headers={
@@ -96,21 +99,25 @@ async def handler(query: dict, request) -> dict:
             content=complete_str,
         )
 
-    voice_data = json.dumps([{
-        "name": filename,
-        "autoPublish": is_one(query.get("autoPublish")),
-        "autoPublishText": query.get("autoPublishText", ""),
-        "description": query.get("description"),
-        "voiceListId": query.get("voiceListId"),
-        "coverImgId": query.get("coverImgId"),
-        "dfsId": doc_id,
-        "categoryId": query.get("categoryId"),
-        "secondCategoryId": query.get("secondCategoryId"),
-        "composedSongs": query.get("composedSongs", "").split(",") if query.get("composedSongs") else [],
-        "privacy": is_one(query.get("privacy")),
-        "publishTime": query.get("publishTime", 0),
-        "orderNo": query.get("orderNo", 1),
-    }])
+    voice_data = json.dumps(
+        [
+            {
+                "name": filename,
+                "autoPublish": is_one(query.get("autoPublish")),
+                "autoPublishText": query.get("autoPublishText", ""),
+                "description": query.get("description"),
+                "voiceListId": query.get("voiceListId"),
+                "coverImgId": query.get("coverImgId"),
+                "dfsId": doc_id,
+                "categoryId": query.get("categoryId"),
+                "secondCategoryId": query.get("secondCategoryId"),
+                "composedSongs": query.get("composedSongs", "").split(",") if query.get("composedSongs") else [],
+                "privacy": is_one(query.get("privacy")),
+                "publishTime": query.get("publishTime", 0),
+                "orderNo": query.get("orderNo", 1),
+            }
+        ]
+    )
 
     await request(
         "/api/voice/workbench/voice/batch/upload/preCheck",

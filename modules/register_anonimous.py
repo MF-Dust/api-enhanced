@@ -1,8 +1,9 @@
-import hashlib
 import base64
+import hashlib
+
+import config as cfg
 from option import create_option
 from utils import generate_device_id
-import config as cfg
 
 
 def _cloudmusic_dll_encode_id(some_id: str) -> str:
@@ -17,9 +18,7 @@ def _cloudmusic_dll_encode_id(some_id: str) -> str:
 async def handler(query: dict, request) -> dict:
     device_id = generate_device_id()
     cfg.DEVICE_ID = device_id
-    encoded_id = base64.b64encode(
-        f"{device_id} {_cloudmusic_dll_encode_id(device_id)}".encode("utf-8")
-    ).decode("utf-8")
+    encoded_id = base64.b64encode(f"{device_id} {_cloudmusic_dll_encode_id(device_id)}".encode()).decode("utf-8")
     data = {"username": encoded_id}
     result = await request("/api/register/anonimous", data, create_option(query, "weapi"))
     if result["body"].get("code") == 200:

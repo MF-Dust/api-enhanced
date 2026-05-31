@@ -8,6 +8,4 @@ async def handler(query: dict, request) -> dict:
         "timeReverseOrder": "true",
         "startDate": "4762584922000",
     }
-    return await request(
-        "/api/content/channel/collect/list", data, create_option(query)
-    )
+    return await request("/api/content/channel/collect/list", data, create_option(query))

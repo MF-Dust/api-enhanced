@@ -1,5 +1,5 @@
-import importlib
 import asyncio
+import importlib
 import sys
 from pathlib import Path
 
@@ -17,10 +17,7 @@ def clear_cache():
 def test_module_name_parity_with_node_modules():
     root = Path(__file__).resolve().parents[2]
     js = {p.stem for p in (root / "module").glob("*.js")}
-    py = {
-        p.stem for p in (root / "PyNCMAPI" / "modules").glob("*.py")
-        if p.stem != "__init__"
-    }
+    py = {p.stem for p in (root / "PyNCMAPI" / "modules").glob("*.py") if p.stem != "__init__"}
     assert js == py
 
 

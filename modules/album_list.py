@@ -9,6 +9,4 @@ async def handler(query: dict, request) -> dict:
         "area": query.get("area", "ALL"),  # ALL:全部,ZH:华语,EA:欧美,KR:韩国,JP:日本
         "type": query.get("type"),
     }
-    return await request(
-        "/api/vipmall/albumproduct/list", data, create_option(query, "weapi")
-    )
+    return await request("/api/vipmall/albumproduct/list", data, create_option(query, "weapi"))

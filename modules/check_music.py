@@ -6,9 +6,7 @@ async def handler(query: dict, request) -> dict:
         "ids": f"[{int(query.get('id', 0))}]",
         "br": int(query.get("br", 999000)),
     }
-    response = await request(
-        "/api/song/enhance/player/url", data, create_option(query, "weapi")
-    )
+    response = await request("/api/song/enhance/player/url", data, create_option(query, "weapi"))
     playable = False
     if response.get("body", {}).get("code") == 200:
         if response["body"]["data"][0].get("code") == 200:

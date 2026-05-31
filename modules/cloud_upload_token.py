@@ -41,9 +41,7 @@ async def handler(query: dict, request) -> dict:
         {
             "bucket": bucket,
             "ext": ext,
-            "filename": re.sub(r"\.[^.]+$", "", filename)
-            .replace(" ", "")
-            .replace(".", "_"),
+            "filename": re.sub(r"\.[^.]+$", "", filename).replace(" ", "").replace(".", "_"),
             "local": False,
             "nos_product": 3,
             "type": "audio",

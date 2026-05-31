@@ -7,6 +7,4 @@ async def handler(query: dict, request) -> dict:
         "total": "true",
         "limit": query.get("limit", 99),
     }
-    return await request(
-        "/api/cloudvideo/category/list", data, create_option(query, "weapi")
-    )
+    return await request("/api/cloudvideo/category/list", data, create_option(query, "weapi"))

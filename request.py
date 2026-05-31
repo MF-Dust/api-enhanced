@@ -1,18 +1,17 @@
 import json
-import os
 import random
 import re
 import string
-import time
 import tempfile
+import time
 from pathlib import Path
-from urllib.parse import urlencode, quote
+from urllib.parse import quote, urlencode
 
 import httpx
 
 import config as cfg
-from crypto import weapi, linuxapi, eapi, eapi_res_decrypt, xeapi, xeapi_res_decrypt
-from utils import cookie_to_json, cookie_obj_to_string, to_boolean
+from crypto import eapi, eapi_res_decrypt, linuxapi, weapi, xeapi, xeapi_res_decrypt
+from utils import cookie_obj_to_string, cookie_to_json, to_boolean
 
 # OS platform info
 OS_MAP = {
@@ -87,9 +86,7 @@ def _load_xeapi_public_key() -> dict | None:
     global _xeapi_public_key
     if not _xeapi_public_key and _xeapi_public_key_path.exists():
         try:
-            _xeapi_public_key = json.loads(
-                _xeapi_public_key_path.read_text(encoding="utf-8")
-            )
+            _xeapi_public_key = json.loads(_xeapi_public_key_path.read_text(encoding="utf-8"))
         except Exception as e:
             print(f"[ERR] {e}")
     return _xeapi_public_key
@@ -167,8 +164,10 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
 
     # Handle e_r (encrypt response)
     e_r = to_boolean(
-        options.get("e_r") if options.get("e_r") is not None
-        else data.get("e_r") if data.get("e_r") is not None
+        options.get("e_r")
+        if options.get("e_r") is not None
+        else data.get("e_r")
+        if data.get("e_r") is not None
         else cfg.ENCRYPT_RESPONSE
     )
     data["e_r"] = e_r
@@ -186,11 +185,13 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
 
     elif crypto == "linuxapi":
         headers["User-Agent"] = options.get("ua") or _choose_user_agent("linuxapi", "linux")
-        encrypt_data = linuxapi({
-            "method": "POST",
-            "url": f"{options.get('domain') or cfg.DOMAIN}{url}",
-            "params": data,
-        })
+        encrypt_data = linuxapi(
+            {
+                "method": "POST",
+                "url": f"{options.get('domain') or cfg.DOMAIN}{url}",
+                "params": data,
+            }
+        )
         target_url = f"{options.get('domain') or cfg.DOMAIN}/api/linux/forward"
 
     elif crypto == "xeapi":
@@ -201,7 +202,9 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
             return {"status": 500, "body": {"code": 500, "msg": "xeapi public key is missing"}, "cookie": []}
 
         xeapi_os = cookie.get("os", "android") if cookie.get("os") == "android" else "android"
-        xeapi_appver = cookie.get("appver", "9.1.65") if cookie.get("os") == "android" and cookie.get("appver") else "9.1.65"
+        xeapi_appver = (
+            cookie.get("appver", "9.1.65") if cookie.get("os") == "android" and cookie.get("appver") else "9.1.65"
+        )
         xeapi_osver = cookie.get("osver", "16") if cookie.get("os") == "android" and cookie.get("osver") else "16"
         xeapi_buildver = cookie.get("buildver", str(int(time.time()))[:10])
 
@@ -232,15 +235,19 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
         path = url[5:] if url.startswith("/api/") else url
         target_url = f"{options.get('domain') or cfg.XEAPI_DOMAIN}/xeapi/{path}"
 
-        encrypt_data = xeapi(url, data, {
-            "publicKeyState": xeapi_public_key,
-            "sessionId": _xeapi_session_id,
-            "sessionKey": _xeapi_session_key,
-            "appver": xeapi_appver,
-            "deviceId": cookie.get("deviceId", ""),
-            "os": xeapi_os,
-            "uid": cookie.get("uid", cookie.get("userId", "")),
-        })
+        encrypt_data = xeapi(
+            url,
+            data,
+            {
+                "publicKeyState": xeapi_public_key,
+                "sessionId": _xeapi_session_id,
+                "sessionKey": _xeapi_session_key,
+                "appver": xeapi_appver,
+                "deviceId": cookie.get("deviceId", ""),
+                "os": xeapi_os,
+                "uid": cookie.get("uid", cookie.get("userId", "")),
+            },
+        )
 
     elif crypto in ("eapi", "api"):
         header = {
@@ -292,9 +299,6 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
         body = urlencode(encrypt_data)
 
     use_e_r = crypto in ("eapi", "weapi") and e_r
-
-    # xeapi response is always binary, e_r responses are also binary
-    expect_binary = use_e_r or use_xeapi
 
     # Proxy settings
     proxy_url = options.get("proxy")

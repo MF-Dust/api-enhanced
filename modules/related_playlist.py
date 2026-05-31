@@ -1,6 +1,6 @@
 import re
+
 import httpx
-from option import create_option
 
 
 async def handler(query: dict, request) -> dict:
@@ -19,15 +19,17 @@ async def handler(query: dict, request) -> dict:
         )
         playlists = []
         for match in pattern.finditer(html):
-            playlists.append({
-                "creator": {
-                    "userId": match.group(4)[len("/user/home?id="):],
-                    "nickname": match.group(5),
-                },
-                "coverImgUrl": match.group(1).split("?param=")[0],
-                "name": match.group(3),
-                "id": match.group(2)[len("/playlist?id="):],
-            })
+            playlists.append(
+                {
+                    "creator": {
+                        "userId": match.group(4)[len("/user/home?id=") :],
+                        "nickname": match.group(5),
+                    },
+                    "coverImgUrl": match.group(1).split("?param=")[0],
+                    "name": match.group(3),
+                    "id": match.group(2)[len("/playlist?id=") :],
+                }
+            )
         return {
             "status": 200,
             "body": {"code": 200, "playlists": playlists},

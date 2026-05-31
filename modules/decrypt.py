@@ -1,6 +1,6 @@
 from base64 import b64decode
 
-from crypto import eapi_req_decrypt, eapi_res_decrypt, aes_decrypt, xeapi_res_decrypt
+from crypto import aes_decrypt, eapi_req_decrypt, eapi_res_decrypt, xeapi_res_decrypt
 
 LINUXAPI_KEY = "rFgB&h#%2?^eDg:Q"
 
@@ -41,9 +41,11 @@ async def handler(query: dict, request) -> dict:
                 pure_hex = data.replace(" ", "")
                 decrypted = aes_decrypt(pure_hex, LINUXAPI_KEY, "", "hex")
                 import json
+
                 result = json.loads(decrypted.decode("utf-8"))
             else:
                 import json
+
                 result = json.loads(data) if isinstance(data, str) else data
 
         elif crypto == "xeapi":
@@ -53,8 +55,7 @@ async def handler(query: dict, request) -> dict:
                     "body": {
                         "code": 400,
                         "message": (
-                            "xeapi 请求解密涉及 X25519 ECDH 密钥交换，流程复杂，暂不支持；"
-                            "仅支持 xeapi 返回数据解密"
+                            "xeapi 请求解密涉及 X25519 ECDH 密钥交换，流程复杂，暂不支持；仅支持 xeapi 返回数据解密"
                         ),
                     },
                 }
@@ -63,6 +64,7 @@ async def handler(query: dict, request) -> dict:
 
         elif crypto == "api":
             import json
+
             result = json.loads(data) if isinstance(data, str) else data
 
         else:

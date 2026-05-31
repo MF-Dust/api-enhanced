@@ -12,7 +12,7 @@ async def handler(query: dict, request) -> dict:
 
     res = await request("/api/v6/playlist/detail", data, create_option(query))
     track_ids = res["body"]["playlist"]["trackIds"]
-    sliced = track_ids[offset:offset + limit]
+    sliced = track_ids[offset : offset + limit]
     c = "[" + ",".join(f'{{"id":{item["id"]}}}' for item in sliced) + "]"
     ids_data = {"c": c}
     return await request("/api/v3/song/detail", ids_data, create_option(query))

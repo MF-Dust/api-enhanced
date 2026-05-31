@@ -1,6 +1,6 @@
 import re
 
-from crypto import eapi_res_decrypt, eapi_req_decrypt
+from crypto import eapi_req_decrypt, eapi_res_decrypt
 
 
 async def handler(query: dict, request) -> dict:

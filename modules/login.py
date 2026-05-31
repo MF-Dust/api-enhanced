@@ -1,11 +1,10 @@
 import hashlib
+
 from option import create_option
 
 
 async def handler(query: dict, request) -> dict:
-    password = query.get("md5_password") or hashlib.md5(
-        (query.get("password") or "").encode()
-    ).hexdigest()
+    password = query.get("md5_password") or hashlib.md5((query.get("password") or "").encode()).hexdigest()
     data = {
         "type": "0",
         "https": "true",
@@ -21,6 +20,7 @@ async def handler(query: dict, request) -> dict:
         }
     if result["body"].get("code") == 200:
         import json
+
         body_str = json.dumps(result["body"]).replace("avatarImgId_str", "avatarImgIdStr")
         body = json.loads(body_str)
         body["cookie"] = ";".join(result.get("cookie", []))

@@ -9,6 +9,4 @@ async def handler(query: dict, request) -> dict:
         "fromUserId": -1,
         "yunbeiNum": query.get("yunbeiNum", 10),
     }
-    return await request(
-        "/api/yunbei/rcmd/song/submit", data, create_option(query, "weapi")
-    )
+    return await request("/api/yunbei/rcmd/song/submit", data, create_option(query, "weapi"))

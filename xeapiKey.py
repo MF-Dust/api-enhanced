@@ -1,20 +1,17 @@
 import random
 import time
-from base64 import b64encode
 
 import httpx
 
 import config as cfg
-from crypto import xeapi_sign, xeapi_decrypt_public_key
+from crypto import xeapi_decrypt_public_key, xeapi_sign
 
 
 def _generate_nonce() -> str:
     return "".join(str(random.randint(0, 9)) for _ in range(16))
 
 
-async def get_xeapi_public_key(
-    current_public_key: dict | None = None, device_id: str = ""
-) -> dict:
+async def get_xeapi_public_key(current_public_key: dict | None = None, device_id: str = "") -> dict:
     """Fetch the xeapi public key from NetEase server."""
     if current_public_key is None:
         current_public_key = {}

@@ -8,10 +8,12 @@ async def handler(query: dict, request) -> dict:
         "verifyConfigId": query.get("vid"),
         "verifyType": query.get("type"),
         "token": query.get("token"),
-        "params": json.dumps({
-            "event_id": query.get("evid"),
-            "sign": query.get("sign"),
-        }),
+        "params": json.dumps(
+            {
+                "event_id": query.get("evid"),
+                "sign": query.get("sign"),
+            }
+        ),
         "size": 150,
     }
 
@@ -21,10 +23,12 @@ async def handler(query: dict, request) -> dict:
         create_option(query, "weapi"),
     )
     qr_code = res["body"]["data"]["qrCode"]
-    params_str = json.dumps({
-        "event_id": query.get("evid"),
-        "sign": query.get("sign"),
-    })
+    params_str = json.dumps(
+        {
+            "event_id": query.get("evid"),
+            "sign": query.get("sign"),
+        }
+    )
     result_url = (
         f"https://st.music.163.com/encrypt-pages?qrCode={qr_code}"
         f"&verifyToken={query.get('token')}&verifyId={query.get('vid')}"
@@ -32,9 +36,11 @@ async def handler(query: dict, request) -> dict:
     )
 
     try:
-        import qrcode
-        import io
         import base64
+        import io
+
+        import qrcode
+
         qr = qrcode.make(result_url)
         buf = io.BytesIO()
         qr.save(buf, format="PNG")

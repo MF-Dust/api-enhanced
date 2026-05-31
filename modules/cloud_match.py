@@ -7,6 +7,4 @@ async def handler(query: dict, request) -> dict:
         "songId": query.get("sid"),
         "adjustSongId": query.get("asid"),
     }
-    return await request(
-        "/api/cloud/user/song/match", data, create_option(query, "weapi")
-    )
+    return await request("/api/cloud/user/song/match", data, create_option(query, "weapi"))

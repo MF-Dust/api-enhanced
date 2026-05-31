@@ -6,6 +6,4 @@ async def handler(query: dict, request) -> dict:
         "limit": query.get("limit", 20),
         "offset": query.get("offset", 0),
     }
-    return await request(
-        "/api/single/mybought/song/list", data, create_option(query, "weapi")
-    )
+    return await request("/api/single/mybought/song/list", data, create_option(query, "weapi"))

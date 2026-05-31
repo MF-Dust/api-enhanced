@@ -9,6 +9,4 @@ async def handler(query: dict, request) -> dict:
         "lastId": query.get("lastId", "0"),
         "score": query.get("score", "-1"),
     }
-    return await request(
-        "/api/voice/broadcast/channel/list", data, create_option(query)
-    )
+    return await request("/api/voice/broadcast/channel/list", data, create_option(query))

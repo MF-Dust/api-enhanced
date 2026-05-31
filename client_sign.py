@@ -1,5 +1,4 @@
 import hashlib
-import os
 import random
 import re
 
@@ -9,6 +8,7 @@ class AdvancedClientSignGenerator:
     def get_real_mac_address() -> str | None:
         try:
             import netifaces
+
             for iface in netifaces.interfaces():
                 addrs = netifaces.ifaddresses(iface)
                 if netifaces.AF_LINK in addrs:
@@ -21,6 +21,7 @@ class AdvancedClientSignGenerator:
             # Fallback: try to get MAC from system
             try:
                 import uuid
+
                 mac = uuid.getnode()
                 mac_str = ":".join(f"{(mac >> i) & 0xFF:02X}" for i in range(40, -1, -8))
                 if mac_str != "00:00:00:00:00:00":
@@ -33,7 +34,7 @@ class AdvancedClientSignGenerator:
     def generate_random_mac() -> str:
         chars = "0123456789ABCDEF"
         parts = []
-        for i in range(6):
+        for _ in range(6):
             parts.append(random.choice(chars) + random.choice(chars))
         mac = ":".join(parts)
         # Ensure unicast address (lowest bit of first byte = 0)

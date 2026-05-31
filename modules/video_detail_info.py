@@ -6,6 +6,4 @@ async def handler(query: dict, request) -> dict:
         "threadid": f"R_VI_62_{query.get('vid')}",
         "composeliked": True,
     }
-    return await request(
-        "/api/comment/commentthread/info", data, create_option(query, "weapi")
-    )
+    return await request("/api/comment/commentthread/info", data, create_option(query, "weapi"))

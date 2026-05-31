@@ -7,13 +7,15 @@ async def handler(query: dict, request) -> dict:
     data = {
         "business": "Album",
         "paymentMethod": query.get("payment", ""),
-        "digitalResources": json.dumps([
-            {
-                "business": "Album",
-                "resourceID": query.get("id", ""),
-                "quantity": query.get("quantity", 1),
-            },
-        ]),
+        "digitalResources": json.dumps(
+            [
+                {
+                    "business": "Album",
+                    "resourceID": query.get("id", ""),
+                    "quantity": query.get("quantity", 1),
+                },
+            ]
+        ),
         "from": "web",
     }
     return await request(

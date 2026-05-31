@@ -1,6 +1,6 @@
-import os
-from option import create_option
+
 import config as cfg
+from option import create_option
 from unblock import match_id
 
 
@@ -22,15 +22,17 @@ async def handler(query: dict, request) -> dict:
                 "body": {
                     "code": 200,
                     "msg": "Warning: Customizing unblock sources is not supported on this endpoint. Please use `/song/url/match` instead.",
-                    "data": [{
-                        "id": int(query.get("id", 0)),
-                        "url": url,
-                        "type": "flac",
-                        "level": query.get("level", "standard"),
-                        "freeTrialInfo": "null",
-                        "fee": 0,
-                        "proxyUrl": proxy_url,
-                    }],
+                    "data": [
+                        {
+                            "id": int(query.get("id", 0)),
+                            "url": url,
+                            "type": "flac",
+                            "level": query.get("level", "standard"),
+                            "freeTrialInfo": "null",
+                            "fee": 0,
+                            "proxyUrl": proxy_url,
+                        }
+                    ],
                 },
                 "cookie": [],
             }

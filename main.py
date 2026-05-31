@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import sys
 
 import uvicorn
 
@@ -19,6 +18,7 @@ def main():
     # Run startup config
     async def startup():
         from generate_config import generate_config
+
         await generate_config()
         print(f"Chinese IP: {cfg.CN_IP}")
         print(f"Device ID: {cfg.DEVICE_ID[:16]}...")

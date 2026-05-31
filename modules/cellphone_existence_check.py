@@ -6,6 +6,4 @@ async def handler(query: dict, request) -> dict:
         "cellphone": query.get("phone"),
         "countrycode": query.get("countrycode"),
     }
-    return await request(
-        "/api/cellphone/existence/check", data, create_option(query)
-    )
+    return await request("/api/cellphone/existence/check", data, create_option(query))
