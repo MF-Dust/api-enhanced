@@ -12,32 +12,19 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 import config as cfg
+from cache import LRUCache
 from logger import log_debug, log_error, log_info, log_warning
 from request import RequestError, ncm_request
 from utils import cookie_to_json
 
 app = FastAPI(title="PyNCMAPI", version="0.1.0")
 
-# Cache for API responses
-_response_cache: dict[str, tuple[float, dict]] = {}
-CACHE_TTL = 120  # 2 minutes
+# Cache for API responses with LRU eviction
+_response_cache = LRUCache(max_size=1000, ttl=120)
 
 
 def _get_cache_key(request: Request, cookies: dict) -> str:
     return f"{request.url.hostname}{request.url.path}?{request.url.query}{json.dumps(cookies, sort_keys=True)}"
-
-
-def _get_cached(cache_key: str) -> dict | None:
-    if cache_key in _response_cache:
-        ts, data = _response_cache[cache_key]
-        if time.time() - ts < CACHE_TTL:
-            return data
-        del _response_cache[cache_key]
-    return None
-
-
-def _set_cache(cache_key: str, data: dict):
-    _response_cache[cache_key] = (time.time(), data)
 
 
 def _cacheable_request(request: Request) -> bool:
@@ -200,7 +187,7 @@ def _load_modules():
                     # Parse cookies from header
                     req_cookies = _parse_cookies(request)
                     cache_key = _get_cache_key(request, req_cookies)
-                    cached = _get_cached(cache_key) if _cacheable_request(request) else None
+                    cached = _response_cache.get(cache_key) if _cacheable_request(request) else None
                     if cached is not None:
                         log_debug(f"Cache hit for {request.url.path}")
                         resp = JSONResponse(
@@ -301,7 +288,7 @@ def _load_modules():
                             )
 
                         if resp.status_code == 200 and _cacheable_request(request):
-                            _set_cache(
+                            _response_cache.set(
                                 cache_key,
                                 {
                                     "status": resp.status_code,
