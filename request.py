@@ -11,7 +11,7 @@ from urllib.parse import urlencode, quote
 import httpx
 
 import config as cfg
-from crypto import weapi, linuxapi, eapi, eapi_res_decrypt
+from crypto import weapi, linuxapi, eapi, eapi_res_decrypt, xeapi, xeapi_res_decrypt
 from utils import cookie_to_json, cookie_obj_to_string, to_boolean
 
 # OS platform info
@@ -63,6 +63,14 @@ SPECIAL_STATUS_CODES = {201, 302, 400, 502, 800, 801, 802, 803}
 _chars = string.ascii_lowercase
 WNMCID = f"{''.join(random.choice(_chars) for _ in range(6))}.{int(time.time() * 1000)}.01.0"
 
+# xeapi public key cache
+_xeapi_public_key: dict | None = None
+_xeapi_public_key_path = Path(tempfile.gettempdir()) / "xeapi_public_key"
+
+# xeapi session state
+_xeapi_session_id: str = ""
+_xeapi_session_key: str = ""
+
 
 def _get_anonymous_token() -> str:
     if cfg.ANONYMOUS_TOKEN:
@@ -72,6 +80,19 @@ def _get_anonymous_token() -> str:
         return tmp_path.read_text(encoding="utf-8").strip()
     except Exception:
         return ""
+
+
+def _load_xeapi_public_key() -> dict | None:
+    """Load xeapi public key from cache or temp file."""
+    global _xeapi_public_key
+    if not _xeapi_public_key and _xeapi_public_key_path.exists():
+        try:
+            _xeapi_public_key = json.loads(
+                _xeapi_public_key_path.read_text(encoding="utf-8")
+            )
+        except Exception as e:
+            print(f"[ERR] {e}")
+    return _xeapi_public_key
 
 
 def _choose_user_agent(crypto: str, ua_type: str = "pc") -> str:
@@ -172,6 +193,55 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
         })
         target_url = f"{options.get('domain') or cfg.DOMAIN}/api/linux/forward"
 
+    elif crypto == "xeapi":
+        global _xeapi_session_id, _xeapi_session_key
+
+        xeapi_public_key = _load_xeapi_public_key()
+        if not xeapi_public_key:
+            return {"status": 500, "body": {"code": 500, "msg": "xeapi public key is missing"}, "cookie": []}
+
+        xeapi_os = cookie.get("os", "android") if cookie.get("os") == "android" else "android"
+        xeapi_appver = cookie.get("appver", "9.1.65") if cookie.get("os") == "android" and cookie.get("appver") else "9.1.65"
+        xeapi_osver = cookie.get("osver", "16") if cookie.get("os") == "android" and cookie.get("osver") else "16"
+        xeapi_buildver = cookie.get("buildver", str(int(time.time()))[:10])
+
+        headers["User-Agent"] = options.get("ua") or _choose_user_agent("api", "android")
+        headers["X-Client-Enc-State"] = "ENCRYPTED"
+        headers["x-aeapi"] = "true"
+        headers["content-type"] = "application/x-www-form-urlencoded;charset=utf-8"
+        headers["x-deviceid"] = cookie.get("deviceId", "")
+        headers["x-os"] = xeapi_os
+        headers["x-osver"] = xeapi_osver
+        headers["x-appver"] = xeapi_appver
+        headers["x-sdeviceid"] = cookie.get("sDeviceId", cookie.get("deviceId", ""))
+        headers["x-buildver"] = xeapi_buildver
+        if cookie.get("MUSIC_U"):
+            headers["x-music-u"] = cookie["MUSIC_U"]
+
+        xeapi_cookie = {
+            **cookie,
+            "os": xeapi_os,
+            "osver": xeapi_osver,
+            "appver": xeapi_appver,
+            "buildver": xeapi_buildver,
+            "deviceId": cookie.get("deviceId", ""),
+            "sDeviceId": cookie.get("sDeviceId", cookie.get("deviceId", "")),
+        }
+        headers["Cookie"] = cookie_obj_to_string(xeapi_cookie)
+
+        path = url[5:] if url.startswith("/api/") else url
+        target_url = f"{options.get('domain') or cfg.XEAPI_DOMAIN}/xeapi/{path}"
+
+        encrypt_data = xeapi(url, data, {
+            "publicKeyState": xeapi_public_key,
+            "sessionId": _xeapi_session_id,
+            "sessionKey": _xeapi_session_key,
+            "appver": xeapi_appver,
+            "deviceId": cookie.get("deviceId", ""),
+            "os": xeapi_os,
+            "uid": cookie.get("uid", cookie.get("userId", "")),
+        })
+
     elif crypto in ("eapi", "api"):
         header = {
             "osver": cookie.get("osver"),
@@ -210,16 +280,21 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
         return {"status": 500, "body": {"code": 500, "msg": f"Unknown crypto: {crypto}"}, "cookie": []}
 
     # Prepare request body
+    use_xeapi = crypto == "xeapi"
+
     if isinstance(encrypt_data, dict):
         body = urlencode(encrypt_data)
     else:
-        body = urlencode(encrypt_data) if isinstance(encrypt_data, dict) else str(encrypt_data)
+        body = str(encrypt_data)
 
-    # For weapi/eapi, encrypt_data is a dict with params/encSecKey or params
+    # For weapi/eapi/linuxapi, encrypt_data is a dict with params/encSecKey or params
     if crypto in ("weapi", "eapi", "linuxapi") and isinstance(encrypt_data, dict):
         body = urlencode(encrypt_data)
 
     use_e_r = crypto in ("eapi", "weapi") and e_r
+
+    # xeapi response is always binary, e_r responses are also binary
+    expect_binary = use_e_r or use_xeapi
 
     # Proxy settings
     proxy_url = options.get("proxy")
@@ -245,7 +320,15 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
             if k.lower() == "set-cookie"
         ]
 
-        if use_e_r:
+        if use_xeapi:
+            # Extract xeapi session headers
+            ssid = response.headers.get("x-encr-ssid")
+            sskey = response.headers.get("x-encr-sskey")
+            if ssid and sskey:
+                _xeapi_session_id = ssid
+                _xeapi_session_key = sskey
+            answer["body"] = xeapi_res_decrypt(response.content)
+        elif use_e_r:
             hex_content = response.content.hex().upper()
             answer["body"] = eapi_res_decrypt(hex_content, headers.get("x-aeapi", False))
         else:

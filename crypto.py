@@ -47,6 +47,16 @@ def _aes_ecb_decrypt(ciphertext_hex: str, key: str) -> bytes:
     return cipher.decrypt(encrypted)
 
 
+def aes_decrypt(ciphertext: str, key: str, iv: str = "", format: str = "base64") -> bytes:
+    """AES-ECB decrypt with base64 or hex input (matches JS aesDecrypt API)."""
+    cipher = AES.new(key.encode("utf-8"), AES.MODE_ECB)
+    if format == "base64":
+        encrypted = b64decode(ciphertext)
+    else:
+        encrypted = bytes.fromhex(ciphertext)
+    return cipher.decrypt(encrypted)
+
+
 def _rsa_encrypt(text: str, public_key_pem: str) -> str:
     key = RSA.import_key(public_key_pem)
     n = key.n

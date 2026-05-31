@@ -41,4 +41,4 @@ async def handler(query: dict, request) -> dict:
             }
     if query.get("level") == "sky":
         data["immerseType"] = "c51"
-    return await request("/api/song/enhance/player/url/v1", data, create_option(query))
+    return await request("/api/song/enhance/player/url/v1", data, create_option(query, "xeapi"))

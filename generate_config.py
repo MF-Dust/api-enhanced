@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -6,7 +7,7 @@ from utils import generate_random_chinese_ip, generate_device_id
 
 
 async def generate_config():
-    """Generate startup config: random Chinese IP + anonymous token."""
+    """Generate startup config: random Chinese IP + anonymous token + xeapi key."""
     import config as cfg
 
     # Set global Chinese IP
@@ -41,3 +42,19 @@ async def generate_config():
     except Exception as e:
         print(f"Failed to register anonymous token: {e}")
         cfg.ANONYMOUS_TOKEN = ""
+
+    # Fetch xeapi public key
+    try:
+        from xeapiKey import get_xeapi_public_key
+
+        xeapi_key_path = Path(tempfile.gettempdir()) / "xeapi_public_key"
+        current_key = {}
+        try:
+            current_key = json.loads(xeapi_key_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+        public_key = await get_xeapi_public_key(current_key, cfg.DEVICE_ID)
+        xeapi_key_path.write_text(json.dumps(public_key), encoding="utf-8")
+    except Exception as e:
+        print(f"Failed to fetch xeapi public key: {e}")
