@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 import config as cfg
+from logger import log_debug, log_error, log_info, log_warning
 from request import RequestError, ncm_request
 from utils import cookie_to_json
 
@@ -194,11 +195,14 @@ def _load_modules():
             # Create a closure for the handler
             def make_route_handler(h):
                 async def route_handler(request: Request):
+                    start_time = time.time()
+
                     # Parse cookies from header
                     req_cookies = _parse_cookies(request)
                     cache_key = _get_cache_key(request, req_cookies)
                     cached = _get_cached(cache_key) if _cacheable_request(request) else None
                     if cached is not None:
+                        log_debug(f"Cache hit for {request.url.path}")
                         resp = JSONResponse(
                             content=cached.get("body", {}),
                             status_code=cached.get("status", 200),
@@ -216,20 +220,20 @@ def _load_modules():
                     if "application/json" in content_type:
                         try:
                             body = await request.json()
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            log_warning(f"Failed to parse JSON body: {e}")
                     elif "application/x-www-form-urlencoded" in content_type:
                         try:
                             form = await request.form()
                             body = dict(form)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            log_warning(f"Failed to parse form body: {e}")
                     elif "multipart/form-data" in content_type:
                         try:
                             form = await request.form()
                             body = await _normalize_form(form)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            log_warning(f"Failed to parse multipart body: {e}")
 
                     # Parse cookie string in query/body to object
                     for item in [query_params, body]:
@@ -267,13 +271,15 @@ def _load_modules():
                                     or not song.get("url")
                                     or song.get("fee") in (1, 4)
                                 ):
+                                    log_debug(f"Attempting to unblock song: {query.get('id')}")
                                     result = await match_id(query.get("id"))
                                     song["url"] = result["data"]["url"]
                                     song["freeTrialInfo"] = None
                                     if "kuwo" in song["url"] and cfg.ENABLE_PROXY == "true" and cfg.PROXY_URL:
                                         song["proxyUrl"] = cfg.PROXY_URL + song["url"]
-                            except Exception:
-                                pass
+                                    log_info(f"Successfully unblocked song: {query.get('id')}")
+                            except Exception as e:
+                                log_warning(f"Failed to unblock song {query.get('id')}: {e}")
 
                         # Build response
                         resp = JSONResponse(
@@ -303,12 +309,22 @@ def _load_modules():
                                     "cookie": cookies if not query.get("noCookie") else [],
                                 },
                             )
+
+                        # Log request completion
+                        duration_ms = (time.time() - start_time) * 1000
+                        log_info(f"{request.method} {request.url.path} - {resp.status_code} ({duration_ms:.2f}ms)")
+
                         return resp
 
                     except RequestError as e:
+                        duration_ms = (time.time() - start_time) * 1000
                         body = e.body or {"code": 404, "data": None, "msg": "Not Found"}
                         if isinstance(body, dict) and body.get("code") == "301":
                             body["msg"] = "需要登录"
+                        log_warning(
+                            f"{request.method} {request.url.path} - {e.status} ({duration_ms:.2f}ms)",
+                            extra={"error": str(e.body)},
+                        )
                         resp = JSONResponse(content=body, status_code=e.status)
                         if not query.get("noCookie"):
                             for cookie in e.cookie:
@@ -316,6 +332,12 @@ def _load_modules():
                         return resp
 
                     except Exception as e:
+                        duration_ms = (time.time() - start_time) * 1000
+                        log_error(
+                            f"{request.method} {request.url.path} - 500 ({duration_ms:.2f}ms)",
+                            exc=e,
+                            extra={"query": query_params},
+                        )
                         return JSONResponse(
                             content={"code": 500, "msg": str(e)},
                             status_code=500,
@@ -330,7 +352,7 @@ def _load_modules():
             )
 
         except Exception as e:
-            print(f"Failed to load module {module_name}: {e}")
+            log_error(f"Failed to load module {module_name}", exc=e)
 
 
 # Load all modules first (routes take priority over static mount)

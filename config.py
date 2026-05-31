@@ -1,4 +1,3 @@
-import os
 from typing import Literal
 
 from dotenv import load_dotenv

@@ -11,6 +11,7 @@ import httpx
 
 import config as cfg
 from crypto import eapi, eapi_res_decrypt, linuxapi, weapi, xeapi, xeapi_res_decrypt
+from logger import log_debug, log_error, log_warning
 from utils import cookie_obj_to_string, cookie_to_json, to_boolean
 
 # OS platform info
@@ -88,7 +89,7 @@ def _load_xeapi_public_key() -> dict | None:
         try:
             _xeapi_public_key = json.loads(_xeapi_public_key_path.read_text(encoding="utf-8"))
         except Exception as e:
-            print(f"[ERR] {e}")
+            log_error("Failed to load xeapi public key", exc=e)
     return _xeapi_public_key
 
 
@@ -283,7 +284,7 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
             target_url = f"{options.get('domain') or cfg.API_DOMAIN}{url}"
             encrypt_data = data
     else:
-        print(f"[ERR] Unknown Crypto: {crypto}")
+        log_error(f"Unknown crypto type: {crypto}")
         return {"status": 500, "body": {"code": 500, "msg": f"Unknown crypto: {crypto}"}, "cookie": []}
 
     # Prepare request body
@@ -356,14 +357,15 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
     except Exception as e:
         answer["status"] = 502
         answer["body"] = {"code": 502, "msg": str(e)}
-        print(f"[ERR] {answer}")
+        log_error(f"Request failed: {target_url}", exc=e, extra={"url": url, "crypto": crypto})
 
     answer["status"] = answer["status"] if 100 < answer["status"] < 600 else 400
 
     if answer["status"] == 200:
+        log_debug(f"Request successful: {url} - {answer['status']}")
         return answer
     else:
-        print(f"[ERR] {answer}")
+        log_warning(f"Request failed: {url} - {answer['status']}", extra={"body": answer.get("body")})
         raise RequestError(answer)
 
 

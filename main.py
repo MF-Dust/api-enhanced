@@ -3,6 +3,8 @@ import asyncio
 
 import uvicorn
 
+from logger import log_info
+
 
 def main():
     parser = argparse.ArgumentParser(description="PyNCMAPI - NetEase Cloud Music API")
@@ -20,8 +22,8 @@ def main():
         from generate_config import generate_config
 
         await generate_config()
-        print(f"Chinese IP: {cfg.CN_IP}")
-        print(f"Device ID: {cfg.DEVICE_ID[:16]}...")
+        log_info(f"Chinese IP: {cfg.CN_IP}")
+        log_info(f"Device ID: {cfg.DEVICE_ID[:16]}...")
 
     asyncio.run(startup())
 
@@ -31,13 +33,14 @@ def main():
 ╠═╣╠═╝║    ║╣ ║║║╠═╣╠═╣║║║║  ║╣  ║║
 ╩ ╩╩  ╩    ╚═╝╝╚╝╩ ╩╩ ╩╝╚╝╚═╝╚═╝═╩╝
 """)
-    print(f"Server started @ http://{'localhost' if not host else host}:{port}")
+    log_info(f"Server starting on http://{'localhost' if not host else host}:{port}")
 
     uvicorn.run(
         "server:app",
         host=host or "0.0.0.0",
         port=port,
         reload=False,
+        log_level=cfg.settings.log_level.lower(),
     )
 
 
