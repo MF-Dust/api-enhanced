@@ -1,3 +1,10 @@
+"""
+NetEase Cloud Music API request module.
+
+This module handles HTTP requests to NetEase Cloud Music API with various
+encryption schemes (weapi, eapi, linuxapi, xeapi) and cookie management.
+"""
+
 import json
 import random
 import re
@@ -5,6 +12,7 @@ import string
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import quote, urlencode
 
 import httpx
@@ -15,7 +23,7 @@ from logger import log_debug, log_error, log_warning
 from utils import cookie_obj_to_string, cookie_to_json, to_boolean
 
 # OS platform info
-OS_MAP = {
+OS_MAP: dict[str, dict[str, str]] = {
     "pc": {
         "os": "pc",
         "appver": "3.1.17.204416",
@@ -43,7 +51,7 @@ OS_MAP = {
 }
 
 # User-Agent profiles
-USER_AGENT_MAP = {
+USER_AGENT_MAP: dict[str, dict[str, str]] = {
     "weapi": {
         "pc": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
     },
@@ -57,15 +65,15 @@ USER_AGENT_MAP = {
     },
 }
 
-SPECIAL_STATUS_CODES = {201, 302, 400, 502, 800, 801, 802, 803}
+SPECIAL_STATUS_CODES: set[int] = {201, 302, 400, 502, 800, 801, 802, 803}
 
 # Pre-compute WNMCID
 _chars = string.ascii_lowercase
-WNMCID = f"{''.join(random.choice(_chars) for _ in range(6))}.{int(time.time() * 1000)}.01.0"
+WNMCID: str = f"{''.join(random.choice(_chars) for _ in range(6))}.{int(time.time() * 1000)}.01.0"
 
 # xeapi public key cache
-_xeapi_public_key: dict | None = None
-_xeapi_public_key_path = Path(tempfile.gettempdir()) / "xeapi_public_key"
+_xeapi_public_key: dict[str, Any] | None = None
+_xeapi_public_key_path: Path = Path(tempfile.gettempdir()) / "xeapi_public_key"
 
 # xeapi session state
 _xeapi_session_id: str = ""
@@ -73,6 +81,7 @@ _xeapi_session_key: str = ""
 
 
 def _get_anonymous_token() -> str:
+    """Get anonymous token from config or temp file."""
     if cfg.ANONYMOUS_TOKEN:
         return cfg.ANONYMOUS_TOKEN
     try:
@@ -94,10 +103,21 @@ def _load_xeapi_public_key() -> dict | None:
 
 
 def _choose_user_agent(crypto: str, ua_type: str = "pc") -> str:
+    """Choose appropriate User-Agent based on crypto type and platform."""
     return USER_AGENT_MAP.get(crypto, {}).get(ua_type, "")
 
 
-def _process_cookie(cookie: dict, uri: str) -> dict:
+def _process_cookie(cookie: dict[str, Any], uri: str) -> dict[str, Any]:
+    """
+    Process and enrich cookie dictionary with required fields.
+
+    Args:
+        cookie: Input cookie dictionary
+        uri: Request URI
+
+    Returns:
+        Processed cookie dictionary with all required fields
+    """
     ntes_nuid = "".join(random.choice("0123456789abcdef") for _ in range(32))
     os_info = OS_MAP.get(cookie.get("os", ""), OS_MAP["pc"])
 
@@ -127,7 +147,8 @@ def _process_cookie(cookie: dict, uri: str) -> dict:
     return processed
 
 
-def _create_header_cookie(header: dict) -> str:
+def _create_header_cookie(header: dict[str, Any]) -> str:
+    """Create cookie header string from dictionary."""
     parts = []
     for key, value in header.items():
         parts.append(f"{quote(str(key))}={quote(str(value))}")
@@ -135,10 +156,25 @@ def _create_header_cookie(header: dict) -> str:
 
 
 def _generate_request_id() -> str:
+    """Generate unique request ID with timestamp and random suffix."""
     return f"{int(time.time() * 1000)}_{random.randint(0, 999):04d}"
 
 
-async def ncm_request(url: str, data: dict, options: dict) -> dict:
+async def ncm_request(url: str, data: dict[str, Any], options: dict[str, Any]) -> dict[str, Any]:
+    """
+    Make HTTP request to NetEase Cloud Music API with encryption.
+
+    Args:
+        url: API endpoint URL
+        data: Request data dictionary
+        options: Request options including crypto type, cookie, headers, etc.
+
+    Returns:
+        Response dictionary with status, body, and cookie fields
+
+    Raises:
+        RequestError: If request fails with non-200 status
+    """
     headers = {**(options.get("headers") or {})}
     ip = options.get("realIP") or options.get("ip") or ""
 
@@ -370,8 +406,16 @@ async def ncm_request(url: str, data: dict, options: dict) -> dict:
 
 
 class RequestError(Exception):
-    def __init__(self, response: dict):
-        self.status = response.get("status", 500)
-        self.body = response.get("body", {})
-        self.cookie = response.get("cookie", [])
+    """Exception raised when API request fails."""
+
+    def __init__(self, response: dict[str, Any]):
+        """
+        Initialize RequestError.
+
+        Args:
+            response: Response dictionary with status, body, and cookie fields
+        """
+        self.status: int = response.get("status", 500)
+        self.body: dict[str, Any] = response.get("body", {})
+        self.cookie: list[str] = response.get("cookie", [])
         super().__init__(str(self.body))

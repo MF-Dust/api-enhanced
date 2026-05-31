@@ -1,3 +1,10 @@
+"""
+Cryptographic functions for NetEase Cloud Music API.
+
+This module provides encryption and decryption functions for various
+NetEase API encryption schemes: weapi, eapi, linuxapi, and xeapi.
+"""
+
 import hashlib
 import hmac
 import json
@@ -23,30 +30,45 @@ from config import (
 
 
 def _pad(text: bytes) -> bytes:
+    """Apply PKCS7 padding to bytes."""
     pad_len = 16 - (len(text) % 16)
     return text + bytes([pad_len] * pad_len)
 
 
 def _aes_cbc_encrypt(text: str, key: str, iv: str) -> str:
+    """Encrypt text using AES-CBC mode."""
     cipher = AES.new(key.encode("utf-8"), AES.MODE_CBC, iv.encode("utf-8"))
     encrypted = cipher.encrypt(_pad(text.encode("utf-8")))
     return b64encode(encrypted).decode("utf-8")
 
 
 def _aes_ecb_encrypt(text: str, key: str) -> str:
+    """Encrypt text using AES-ECB mode, return hex string."""
     cipher = AES.new(key.encode("utf-8"), AES.MODE_ECB)
     encrypted = cipher.encrypt(_pad(text.encode("utf-8")))
     return encrypted.hex().upper()
 
 
 def _aes_ecb_decrypt(ciphertext_hex: str, key: str) -> bytes:
+    """Decrypt hex ciphertext using AES-ECB mode."""
     cipher = AES.new(key.encode("utf-8"), AES.MODE_ECB)
     encrypted = bytes.fromhex(ciphertext_hex)
     return cipher.decrypt(encrypted)
 
 
 def aes_decrypt(ciphertext: str, key: str, iv: str = "", format: str = "base64") -> bytes:
-    """AES-ECB decrypt with base64 or hex input (matches JS aesDecrypt API)."""
+    """
+    AES-ECB decrypt with base64 or hex input.
+
+    Args:
+        ciphertext: Encrypted text in base64 or hex format
+        key: Decryption key
+        iv: Initialization vector (unused for ECB mode)
+        format: Input format, either "base64" or "hex"
+
+    Returns:
+        Decrypted bytes
+    """
     cipher = AES.new(key.encode("utf-8"), AES.MODE_ECB)
     if format == "base64":
         encrypted = b64decode(ciphertext)
@@ -56,6 +78,7 @@ def aes_decrypt(ciphertext: str, key: str, iv: str = "", format: str = "base64")
 
 
 def _rsa_encrypt(text: str, public_key_pem: str) -> str:
+    """Encrypt text using RSA public key (no padding)."""
     key = RSA.import_key(public_key_pem)
     n = key.n
     # Raw RSA: text^e mod n, no padding
@@ -68,6 +91,15 @@ def _rsa_encrypt(text: str, public_key_pem: str) -> str:
 
 
 def weapi(data: dict) -> dict:
+    """
+    Encrypt data using weapi encryption scheme.
+
+    Args:
+        data: Dictionary to encrypt
+
+    Returns:
+        Dictionary with 'params' and 'encSecKey' fields
+    """
     text = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
     secret_key = "".join(random.choice(BASE62) for _ in range(16))
     # First AES-CBC pass with preset key
@@ -80,11 +112,30 @@ def weapi(data: dict) -> dict:
 
 
 def linuxapi(data: dict) -> dict:
+    """
+    Encrypt data using linuxapi encryption scheme.
+
+    Args:
+        data: Dictionary to encrypt
+
+    Returns:
+        Dictionary with 'eparams' field
+    """
     text = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
     return {"eparams": _aes_ecb_encrypt(text, LINUXAPI_KEY)}
 
 
 def eapi(url: str, data: dict) -> dict:
+    """
+    Encrypt data using eapi encryption scheme.
+
+    Args:
+        url: API endpoint URL
+        data: Dictionary to encrypt
+
+    Returns:
+        Dictionary with 'params' field
+    """
     text = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
     message = f"nobody{url}use{text}md5forencrypt"
     digest = hashlib.md5(message.encode("utf-8")).hexdigest()
@@ -92,7 +143,17 @@ def eapi(url: str, data: dict) -> dict:
     return {"params": _aes_ecb_encrypt(content, EAPI_KEY)}
 
 
-def eapi_res_decrypt(encrypted_params: str, aeapi: bool = False):
+def eapi_res_decrypt(encrypted_params: str, aeapi: bool = False) -> dict | None:
+    """
+    Decrypt eapi response.
+
+    Args:
+        encrypted_params: Encrypted response parameters
+        aeapi: Whether response is compressed with gzip
+
+    Returns:
+        Decrypted dictionary or None on error
+    """
     try:
         decrypted = _aes_ecb_decrypt(encrypted_params, EAPI_KEY)
         if aeapi:
@@ -104,11 +165,22 @@ def eapi_res_decrypt(encrypted_params: str, aeapi: bool = False):
             decrypted = decrypted[:-pad_len]
             return json.loads(decrypted.decode("utf-8"))
     except Exception as e:
-        print(f"eapiResDecrypt error: {e}")
+        from logger import log_error
+
+        log_error("eapiResDecrypt error", exc=e)
         return None
 
 
-def eapi_req_decrypt(encrypted_params: str):
+def eapi_req_decrypt(encrypted_params: str) -> dict | None:
+    """
+    Decrypt eapi request parameters.
+
+    Args:
+        encrypted_params: Encrypted request parameters
+
+    Returns:
+        Dictionary with 'url' and 'data' fields, or None on error
+    """
     try:
         decrypted = _aes_ecb_decrypt(encrypted_params, EAPI_KEY)
         # Remove PKCS7 padding
@@ -122,7 +194,9 @@ def eapi_req_decrypt(encrypted_params: str):
             return {"url": url, "data": data}
         return None
     except Exception as e:
-        print(f"eapiReqDecrypt error: {e}")
+        from logger import log_error
+
+        log_error("eapiReqDecrypt error", exc=e)
         return None
 
 
@@ -164,7 +238,16 @@ def _derive_x25519_aes_key(shared_secret: bytes, ephemeral_public_key: bytes) ->
 
 
 def xeapi_sign(timestamp: str, nonce: str) -> str:
-    """HMAC-SHA256 signature for xeapi."""
+    """
+    Generate HMAC-SHA256 signature for xeapi.
+
+    Args:
+        timestamp: Timestamp string
+        nonce: Random nonce string
+
+    Returns:
+        Base64-encoded signature
+    """
     message = str(timestamp) + nonce
     sig = hmac.new(
         XEAPI_SIGN_KEY.encode("utf-8"),
@@ -175,7 +258,15 @@ def xeapi_sign(timestamp: str, nonce: str) -> str:
 
 
 def xeapi_mid_transform(ciphertext: bytes) -> bytes:
-    """XOR + rotation transform for xeapi mid-layer."""
+    """
+    Apply XOR and rotation transform for xeapi mid-layer.
+
+    Args:
+        ciphertext: Encrypted bytes to transform
+
+    Returns:
+        Transformed bytes
+    """
     random_bytes = os.urandom(16)
     xored = bytearray(len(ciphertext))
     for i in range(len(ciphertext)):
@@ -186,7 +277,17 @@ def xeapi_mid_transform(ciphertext: bytes) -> bytes:
 
 
 def xeapi_encrypt_s(dynamic_key: bytes, public_key_state: dict, os_name: str = "android") -> bytes:
-    """X25519 ECDH + AES-128-GCM encryption for xeapi S field."""
+    """
+    Perform X25519 ECDH + AES-128-GCM encryption for xeapi S field.
+
+    Args:
+        dynamic_key: Dynamic encryption key
+        public_key_state: Server public key state
+        os_name: Operating system name
+
+    Returns:
+        Encrypted S field bytes
+    """
     from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
     peer_raw = b64decode(public_key_state["publicKey"])
@@ -217,8 +318,18 @@ def xeapi_encrypt_s(dynamic_key: bytes, public_key_state: dict, os_name: str = "
     return ephemeral_raw + iv + encrypted + tag
 
 
-def build_xeapi_plaintext(uri: str, data: dict, options: dict = None) -> str:
-    """Build the JSON plaintext for xeapi encryption."""
+def build_xeapi_plaintext(uri: str, data: dict, options: dict | None = None) -> str:
+    """
+    Build JSON plaintext for xeapi encryption.
+
+    Args:
+        uri: API endpoint URI
+        data: Request data dictionary
+        options: Optional request options
+
+    Returns:
+        JSON string for encryption
+    """
     options = options or {}
     fields = {}
 
@@ -252,8 +363,21 @@ def build_xeapi_plaintext(uri: str, data: dict, options: dict = None) -> str:
     return json.dumps(fields, separators=(",", ":"))
 
 
-def xeapi(uri: str, data: dict, options: dict = None) -> dict:
-    """Full xeapi encryption. Returns dict with B, S, R fields."""
+def xeapi(uri: str, data: dict, options: dict | None = None) -> dict:
+    """
+    Perform full xeapi encryption.
+
+    Args:
+        uri: API endpoint URI
+        data: Request data dictionary
+        options: Optional encryption options including publicKeyState, sessionKey, sessionId
+
+    Returns:
+        Dictionary with B, S, R encrypted fields
+
+    Raises:
+        ValueError: If publicKeyState is not provided in options
+    """
     options = options or {}
     public_key_state = options.get("publicKeyState")
     if not public_key_state:
@@ -289,7 +413,15 @@ def xeapi(uri: str, data: dict, options: dict = None) -> dict:
 
 
 def xeapi_res_decrypt(body: bytes) -> dict:
-    """Decrypt xeapi response body."""
+    """
+    Decrypt xeapi response body.
+
+    Args:
+        body: Encrypted response body bytes
+
+    Returns:
+        Decrypted dictionary
+    """
     decrypted = _aes_ecb_decrypt_bytes(EAPI_KEY.encode("utf-8"), body)
     # Check for gzip magic bytes
     if len(decrypted) >= 2 and decrypted[0] == 0x1F and decrypted[1] == 0x8B:
@@ -298,7 +430,15 @@ def xeapi_res_decrypt(body: bytes) -> dict:
 
 
 def xeapi_decrypt_public_key(encrypted_data: str) -> dict:
-    """Decrypt the xeapi public key received from the server."""
+    """
+    Decrypt xeapi public key received from server.
+
+    Args:
+        encrypted_data: Base64-encoded encrypted public key
+
+    Returns:
+        Decrypted public key dictionary
+    """
     ciphertext = b64decode(encrypted_data)
     decrypted = _aes_ecb_decrypt_bytes(XEAPI_STATIC_KEY, ciphertext)
     return json.loads(decrypted.decode("utf-8"))

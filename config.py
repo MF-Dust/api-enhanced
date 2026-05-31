@@ -1,3 +1,10 @@
+"""
+Configuration module with type-safe settings management.
+
+This module provides application configuration using Pydantic for validation
+and type safety. Settings can be loaded from environment variables or .env files.
+"""
+
 from typing import Literal
 
 from dotenv import load_dotenv
@@ -49,37 +56,37 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Backward compatibility: expose settings as module-level constants
-API_DOMAIN = settings.api_domain
-DOMAIN = settings.domain
-XEAPI_DOMAIN = settings.xeapi_domain
-ENCRYPT = settings.encrypt
-ENCRYPT_RESPONSE = settings.encrypt_response
-CORS_ALLOW_ORIGIN = settings.cors_allow_origin
-ENABLE_PROXY = "true" if settings.enable_proxy else "false"
-PROXY_URL = settings.proxy_url
-ENABLE_GENERAL_UNBLOCK = "true" if settings.enable_general_unblock else "false"
-ENABLE_FLAC = "true" if settings.enable_flac else "false"
-NETEASE_COOKIE = settings.netease_cookie
-PORT = settings.port
-HOST = settings.host
+API_DOMAIN: str = settings.api_domain
+DOMAIN: str = settings.domain
+XEAPI_DOMAIN: str = settings.xeapi_domain
+ENCRYPT: bool = settings.encrypt
+ENCRYPT_RESPONSE: bool = settings.encrypt_response
+CORS_ALLOW_ORIGIN: str = settings.cors_allow_origin
+ENABLE_PROXY: str = "true" if settings.enable_proxy else "false"
+PROXY_URL: str = settings.proxy_url
+ENABLE_GENERAL_UNBLOCK: str = "true" if settings.enable_general_unblock else "false"
+ENABLE_FLAC: str = "true" if settings.enable_flac else "false"
+NETEASE_COOKIE: str = settings.netease_cookie
+PORT: int = settings.port
+HOST: str = settings.host
 
 # Crypto constants
-IV = "0102030405060708"
-PRESET_KEY = "0CoJUm6Qyw8W8jud"
-LINUXAPI_KEY = "rFgB&h#%2?^eDg:Q"
-EAPI_KEY = "e82ckenh8dichen8"
-BASE62 = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+IV: str = "0102030405060708"
+PRESET_KEY: str = "0CoJUm6Qyw8W8jud"
+LINUXAPI_KEY: str = "rFgB&h#%2?^eDg:Q"
+EAPI_KEY: str = "e82ckenh8dichen8"
+BASE62: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-RSA_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
+RSA_PUBLIC_KEY: str = """-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB
 -----END PUBLIC KEY-----"""
 
 # xeapi constants
-XEAPI_STATIC_KEY = bytes.fromhex("ab1d5a430f6bb04a3f01e81ddd72bd916d5ce591248ac128714806d7f8fb1b84")
-XEAPI_SIGN_KEY = "mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/OKty3+lL2rGeoFBpVe5g=="
+XEAPI_STATIC_KEY: bytes = bytes.fromhex("ab1d5a430f6bb04a3f01e81ddd72bd916d5ce591248ac128714806d7f8fb1b84")
+XEAPI_SIGN_KEY: str = "mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/OKty3+lL2rGeoFBpVe5g=="
 
 # Resource type map for comments
-RESOURCE_TYPE_MAP = {
+RESOURCE_TYPE_MAP: dict[str, str] = {
     "0": "R_SO_4_",
     "1": "R_MV_5_",
     "2": "A_PL_0_",
@@ -91,8 +98,8 @@ RESOURCE_TYPE_MAP = {
 }
 
 # Anti-cheat tokens
-CLIENT_SIGN = "18:C0:4D:B9:8F:FE@@@453832335F384641365F424635335F303030315F303031425F343434415F343643365F333638332@@@@@@6ff673ef74955b38bce2fa8562d95c976ed4758b1227c4e9ee345987cee17bc9"
-CHECK_TOKEN = "9ca17ae2e6ffcda170e2e6ee8af14fbabdb988f225b3868eb2c15a879b9a83d274a790ac8ff54a97b889d5d42af0feaec3b92af58cff99c470a7eafd88f75e839a9ea7c14e909da883e83fb692a3abdb6b92adee9e"
+CLIENT_SIGN: str = "18:C0:4D:B9:8F:FE@@@453832335F384641365F424635335F303030315F303031425F343434415F343643365F333638332@@@@@@6ff673ef74955b38bce2fa8562d95c976ed4758b1227c4e9ee345987cee17bc9"
+CHECK_TOKEN: str = "9ca17ae2e6ffcda170e2e6ee8af14fbabdb988f225b3868eb2c15a879b9a83d274a790ac8ff54a97b889d5d42af0feaec3b92af58cff99c470a7eafd88f75e839a9ea7c14e909da883e83fb692a3abdb6b92adee9e"
 
 # Global state (set by generate_config at startup)
 CN_IP: str = ""
