@@ -20,6 +20,16 @@ RSA_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDgtQn2JZ34ZC28NWYpAUd98iZ37BUrX/aKzmFbt7clFSs6sXqHauqKWqdtLkF2KexO40H1YTX8z2lSgBBOAxLsvaklV8k4cBFK9snQXE9/DDaFt6Rr7iVZMldczhC0JNgTz+SHXT6CBHuX3e9SdB1Ua44oncaTWz7OBGLbCiK45wIDAQAB
 -----END PUBLIC KEY-----"""
 
+# xeapi constants
+XEAPI_STATIC_KEY = bytes.fromhex(
+    "ab1d5a430f6bb04a3f01e81ddd72bd916d5ce591248ac128714806d7f8fb1b84"
+)
+XEAPI_SIGN_KEY = (
+    "mUHCwVNWJbunMqAHf5MImuirT6plvs6VSFW62MGHstFQxhBGdEoIhLItH3djc4+FB/"
+    "OKty3+lL2rGeoFBpVe5g=="
+)
+XEAPI_DOMAIN = "https://interface3.music.163.com"
+
 # Resource type map for comments
 RESOURCE_TYPE_MAP = {
     "0": "R_SO_4_",

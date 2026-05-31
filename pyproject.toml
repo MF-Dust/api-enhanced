@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiofiles>=25.1.0",
+    "cryptography>=44.0.0",
     "fastapi>=0.136.1",
     "httpx>=0.28.1",
     "mutagen>=1.47.0",
